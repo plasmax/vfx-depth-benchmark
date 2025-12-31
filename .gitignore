@@ -1,1 +1,6 @@
-/assets/videos
+/assets/video/src/*.*
+/assets/video/results
+
+!/assets/video/src/*.jpg
+!/assets/video/src/*_compressed.mp4
+
