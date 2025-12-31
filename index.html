@@ -120,13 +120,16 @@
                     <video id="videoB" class="absolute top-0 left-0 w-full h-full object-cover" loop playsinline muted></video>
 
                     <!-- Overlay Layer (Source / RGB) - Clipped -->
-                    <div id="videoAContainer" class="absolute top-0 left-0 w-1/2 h-full overflow-hidden border-r-2 border-white/50 z-10">
+                    <div id="videoAContainer" class="absolute top-0 left-0 w-full h-full overflow-hidden z-10" style="clip-path: inset(0 50% 0 0);">
                         <!-- FIX: Removed internal <source> tag -->
                         <video id="videoA" class="absolute top-0 left-0 w-full h-full max-w-none object-cover" loop playsinline muted></video>
                     </div>
 
+                    <!-- Slider Divider -->
+                    <div id="sliderDivider" class="absolute top-0 bottom-0 left-1/2 w-0.5 bg-white/60 z-20 pointer-events-none"></div>
+
                     <!-- Slider Handle -->
-                    <div id="sliderHandle" class="absolute top-0 bottom-0 left-1/2 w-8 -ml-4 z-20 cursor-col-resize flex items-center justify-center group-hover:opacity-100 transition-opacity">
+                    <div id="sliderHandle" class="absolute top-0 bottom-0 left-1/2 w-8 -ml-4 z-30 cursor-col-resize flex items-center justify-center group-hover:opacity-100 transition-opacity">
                         <div class="w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center transform hover:scale-110 transition slider-handle">
                             <i data-lucide="arrow-left-right" class="text-slate-900 w-4 h-4"></i>
                         </div>
@@ -322,6 +325,7 @@
             videoB: document.getElementById('videoB'),
             videoAContainer: document.getElementById('videoAContainer'),
             sliderHandle: document.getElementById('sliderHandle'),
+            sliderDivider: document.getElementById('sliderDivider'),
             playPauseBtn: document.getElementById('playPauseBtn'),
             progressBar: document.getElementById('progressBar'),
             progressBarContainer: document.getElementById('progressBarContainer'),
@@ -481,8 +485,9 @@
                 const width = rect.width;
                 const percent = Math.max(0, Math.min(100, (x / width) * 100));
                 
-                els.videoAContainer.style.width = `${percent}%`;
+                els.videoAContainer.style.clipPath = `inset(0 ${100 - percent}% 0 0)`;
                 els.sliderHandle.style.left = `${percent}%`;
+                els.sliderDivider.style.left = `${percent}%`;
             };
 
             const container = document.getElementById('playerContainer');
