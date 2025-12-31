@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Depth Benchmark Survey</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        slate: {
+                            850: '#151b28',
+                            900: '#0f172a',
+                            950: '#020617',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b; 
+        }
+
+        /* Slider Handle Styles */
+        .slider-handle {
+            box-shadow: 0 0 15px 5px rgba(0, 0, 0, 0.3);
+        }
+        
+        .video-container {
+            aspect-ratio: 16 / 9;
+            background-image: linear-gradient(45deg, #1e293b 25%, #0f172a 25%, #0f172a 50%, #1e293b 50%, #1e293b 75%, #0f172a 75%, #0f172a 100%);
+            background-size: 20px 20px;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200 font-sans min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i data-lucide="layers" class="text-blue-500 h-6 w-6"></i>
+                <div>
+                    <h1 class="font-bold text-lg tracking-tight">DepthBench<span class="text-blue-500">.io</span></h1>
+                    <p class="text-xs text-slate-400">Video Depth Estimation Survey for VFX</p>
+                </div>
+            </div>
+            <div class="flex gap-4 text-sm font-medium">
+                <a href="#" class="hover:text-blue-400 transition">About</a>
+                <a href="#" class="hover:text-blue-400 transition">Submit Model</a>
+                <a href="https://github.com" class="text-slate-400 hover:text-white"><i data-lucide="github" class="h-5 w-5"></i></a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 py-8 w-full gap-8 grid grid-cols-1 lg:grid-cols-12">
+        
+        <!-- LEFT COLUMN: Player & Controls (Sticky on Desktop) -->
+        <div class="lg:col-span-7 flex flex-col gap-6">
+            
+            <!-- Sticky Wrapper -->
+            <div class="sticky top-24 flex flex-col gap-6">
+
+                <!-- Scene Selector -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 p-4 rounded-xl border border-slate-800">
+                    <div>
+                        <label class="block text-xs font-mono text-slate-500 mb-1">TEST SCENE</label>
+                        <select id="sceneSelect" class="bg-slate-950 border border-slate-700 text-slate-200 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 min-w-[200px]">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-right">
+                            <div class="text-xs font-mono text-slate-500">RESOLUTION</div>
+                            <div class="text-sm font-semibold" id="resDisplay">1080p</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs font-mono text-slate-500">FRAMES</div>
+                            <div class="text-sm font-semibold" id="framesDisplay">120</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comparison Player -->
+                <div class="relative w-full rounded-xl overflow-hidden shadow-2xl border border-slate-700 video-container group" id="playerContainer">
+                    
+                    <!-- Base Layer (Model / Depth) -->
+                    <!-- FIX: Removed internal <source> tag to prevent empty src error -->
+                    <video id="videoB" class="absolute top-0 left-0 w-full h-full object-cover" loop playsinline muted></video>
+
+                    <!-- Overlay Layer (Source / RGB) - Clipped -->
+                    <div id="videoAContainer" class="absolute top-0 left-0 w-1/2 h-full overflow-hidden border-r-2 border-white/50 z-10">
+                        <!-- FIX: Removed internal <source> tag -->
+                        <video id="videoA" class="absolute top-0 left-0 w-full h-full max-w-none object-cover" loop playsinline muted></video>
+                    </div>
+
+                    <!-- Slider Handle -->
+                    <div id="sliderHandle" class="absolute top-0 bottom-0 left-1/2 w-8 -ml-4 z-20 cursor-col-resize flex items-center justify-center group-hover:opacity-100 transition-opacity">
+                        <div class="w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center transform hover:scale-110 transition slider-handle">
+                            <i data-lucide="arrow-left-right" class="text-slate-900 w-4 h-4"></i>
+                        </div>
+                    </div>
+
+                    <!-- Labels -->
+                    <div class="absolute top-4 left-4 z-30 bg-black/50 backdrop-blur px-2 py-1 rounded text-xs font-mono border border-white/10 pointer-events-none">
+                        SOURCE
+                    </div>
+                    <div class="absolute top-4 right-4 z-30 bg-black/50 backdrop-blur px-2 py-1 rounded text-xs font-mono border border-white/10 pointer-events-none">
+                        <span id="currentModelLabel">SELECT A MODEL</span>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div id="loadingOverlay" class="absolute inset-0 bg-slate-900 flex items-center justify-center z-40">
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                            <span class="text-xs text-slate-400 font-mono">LOADING ASSETS...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Playback Controls -->
+                <div class="flex items-center justify-between bg-slate-900 p-3 rounded-lg border border-slate-800">
+                    <button id="playPauseBtn" class="p-2 hover:bg-slate-800 rounded-lg text-white transition">
+                        <i data-lucide="play" class="w-5 h-5 fill-current"></i>
+                    </button>
+                    
+                    <div class="flex-grow mx-4 relative h-1 bg-slate-700 rounded cursor-pointer group" id="progressBarContainer">
+                        <div id="progressBar" class="absolute left-0 top-0 h-full bg-blue-500 rounded w-0 transition-all duration-75"></div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <button id="muteBtn" class="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition">
+                            <i data-lucide="volume-x" class="w-4 h-4"></i>
+                        </button>
+                        <span class="text-xs font-mono text-slate-500" id="timeDisplay">00:00 / 00:00</span>
+                    </div>
+                </div>
+
+                <!-- Active Model Details -->
+                <div id="activeModelCard" class="bg-slate-800/50 p-6 rounded-xl border border-slate-700 hidden">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-white" id="detailName">Model Name</h2>
+                            <p class="text-sm text-slate-400 mt-1" id="detailPurpose">Best for general purpose depth estimation.</p>
+                        </div>
+                        <span id="detailBadge" class="px-2 py-1 rounded text-xs font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                            MIT
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4 pt-4 border-t border-slate-700/50">
+                        <div>
+                            <div class="text-xs font-mono text-slate-500 mb-1">VRAM (1080p)</div>
+                            <div class="text-sm font-semibold text-slate-200" id="detailVram">--</div>
+                        </div>
+                        <div>
+                            <div class="text-xs font-mono text-slate-500 mb-1">CONSISTENCY</div>
+                            <div class="text-sm font-semibold text-green-400" id="detailConsistency">--</div>
+                        </div>
+                        <div>
+                            <div class="text-xs font-mono text-slate-500 mb-1">TYPE</div>
+                            <div class="text-sm font-semibold text-slate-200" id="detailType">--</div>
+                        </div>
+                        <div>
+                            <div class="text-xs font-mono text-slate-500 mb-1">PAPER</div>
+                            <a href="#" id="detailLink" target="_blank" class="text-sm text-blue-400 hover:underline flex items-center gap-1">
+                                Link <i data-lucide="external-link" class="w-3 h-3"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Model List -->
+        <div class="lg:col-span-5 flex flex-col h-full">
+            
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg">Models <span class="text-slate-500 text-sm font-normal ml-2" id="modelCount">(0)</span></h3>
+                
+                <!-- Filter -->
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="Search models..." class="bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-sm focus:ring-1 focus:ring-blue-500 w-48 transition-all focus:w-64">
+                    <i data-lucide="search" class="absolute left-3 top-2 w-4 h-4 text-slate-500"></i>
+                </div>
+            </div>
+
+            <!-- Scrollable List -->
+            <div class="flex-grow overflow-y-auto max-h-[calc(100vh-200px)] pr-2 space-y-3" id="modelList">
+                <!-- Populated by JS -->
+            </div>
+            
+            <div class="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-xs text-yellow-200/80">
+                <p class="flex gap-2">
+                    <i data-lucide="info" class="w-4 h-4 flex-shrink-0"></i>
+                    <span>
+                        <strong>Note:</strong> VRAM usage is estimated for 1080p inference. "Commercial" status refers to the original repository license.
+                    </span>
+                </p>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="border-t border-slate-800 bg-slate-900 mt-auto py-8">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-slate-500 text-sm">Created for the VFX Community Survey.</p>
+            <p class="text-slate-600 text-xs mt-2">Video content &copy; Respective Owners. Models &copy; Respective Authors.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- DATA CONFIGURATION ---
+        
+        // Define your test clips here. 
+        // TIP: Use absolute paths or relative paths to your repo structure (e.g., 'assets/videos/clip1_source.mp4')
+        const scenes = [
+            {
+                id: 'walking_city',
+                name: 'Walking Man - City',
+                source: 'https://videos.pexels.com/video-files/3205636/3205636-hd_1920_1080_25fps.mp4', 
+                poster: 'https://images.pexels.com/videos/3205636/pictures/preview-0.jpg',
+                resolution: '1920x1080',
+                fps: '25',
+                desc: 'Handheld camera, complex background, moving subject.'
+            },
+            {
+                id: 'drone_landscape',
+                name: 'Drone - Landscape',
+                source: 'https://videos.pexels.com/video-files/855564/855564-hd_1920_1080_25fps.mp4',
+                poster: 'https://images.pexels.com/videos/855564/pictures/preview-0.jpg',
+                resolution: '1920x1080',
+                fps: '30',
+                desc: 'Fast motion, infinite depth, foliage texture.'
+            }
+        ];
+
+        // Full Model List from your request
+        // TIP: 'vidSuffix' is what we append to the scene ID to find the file.
+        // e.g. if scene is 'walking_city', Depth Anything V2 looks for 'walking_city_depth_anything_v2.mp4'
+        const models = [
+            { name: "Depth Anything V2", type: "Monocular", vram: "8GB", license: "Apache 2.0", vidSuffix: "_da2", tags: ["SOTA", "Fast"] },
+            { name: "Depth Anything 3", type: "Monocular", vram: "10GB", license: "Research", vidSuffix: "_da3", tags: ["New"] },
+            { name: "MiDaS", type: "Monocular", vram: "4GB", license: "MIT", vidSuffix: "_midas", tags: ["Legacy"] },
+            { name: "MoGe", type: "Geometry", vram: "12GB", license: "Research", vidSuffix: "_moge", tags: [] },
+            { name: "MoGe-2", type: "Geometry", vram: "16GB", license: "Research", vidSuffix: "_moge2", tags: [] },
+            { name: "GeometryCrafter", type: "Generative", vram: "24GB", license: "Research", vidSuffix: "_geocrafter", tags: ["Heavy"] },
+            { name: "DepthCrafter", type: "Generative", vram: "22GB", license: "Research", vidSuffix: "_depthcrafter", tags: [] },
+            { name: "NVDS+", type: "Stereo", vram: "12GB", license: "NVIDIA", vidSuffix: "_nvds", tags: [] },
+            { name: "Video Depth Anything", type: "Video", vram: "10GB", license: "Apache 2.0", vidSuffix: "_vda", tags: ["Temporal"] },
+            { name: "Online Video Depth Anything", type: "Video", vram: "8GB", license: "Apache 2.0", vidSuffix: "_ovda", tags: ["Realtime"] },
+            { name: "FlashDepth", type: "Monocular", vram: "2GB", license: "MIT", vidSuffix: "_flash", tags: ["Fast"] },
+            { name: "BetterDepth", type: "Monocular", vram: "6GB", license: "Research", vidSuffix: "_better", tags: [] },
+            { name: "VGGT", type: "Video", vram: "16GB", license: "Research", vidSuffix: "_vggt", tags: [] },
+            { name: "Prior Depth Anything", type: "Monocular", vram: "8GB", license: "Apache 2.0", vidSuffix: "_pda", tags: [] },
+            { name: "Prompt Depth Anything", type: "Interactive", vram: "8GB", license: "Apache 2.0", vidSuffix: "_promptda", tags: [] },
+            { name: "Depth Pro", type: "Monocular", vram: "12GB", license: "Research", vidSuffix: "_depthpro", tags: ["Metric"] },
+            { name: "Pixel Perfect Depth", type: "Monocular", vram: "6GB", license: "Research", vidSuffix: "_ppd", tags: [] },
+            { name: "TTT3R", type: "3D", vram: "24GB", license: "Research", vidSuffix: "_ttt3r", tags: [] },
+            { name: "BA-Track", type: "Tracking", vram: "12GB", license: "MIT", vidSuffix: "_batrack", tags: [] },
+            { name: "Consistent Video Depth", type: "Video", vram: "14GB", license: "MIT", vidSuffix: "_cvd", tags: ["Stable"] },
+            { name: "Robust Consistent Video Depth", type: "Video", vram: "16GB", license: "MIT", vidSuffix: "_rcvd", tags: [] },
+            { name: "COLMAP", type: "SfM", vram: "N/A", license: "BSD", vidSuffix: "_colmap", tags: ["Offline", "Reference"] },
+            { name: "UniDepthV2", type: "Monocular", vram: "10GB", license: "Apache 2.0", vidSuffix: "_uni2", tags: [] },
+            { name: "DINOv2", type: "Feature", vram: "8GB", license: "Apache 2.0", vidSuffix: "_dino2", tags: [] },
+            { name: "ZoeDepth", type: "Monocular", vram: "6GB", license: "MIT", vidSuffix: "_zoe", tags: ["Metric"] },
+            { name: "Marigold", type: "Generative", vram: "16GB", license: "Apache 2.0", vidSuffix: "_marigold", tags: ["High Quality"] },
+            { name: "Lotus 2", type: "Generative", vram: "20GB", license: "Research", vidSuffix: "_lotus2", tags: [] },
+            { name: "ChronoDepth", type: "Video", vram: "12GB", license: "Research", vidSuffix: "_chrono", tags: [] },
+            { name: "SpatialTracker", type: "Tracking", vram: "10GB", license: "MIT", vidSuffix: "_spatial", tags: [] },
+            { name: "Mast3r", type: "3D", vram: "24GB", license: "MIT", vidSuffix: "_mast3r", tags: [] },
+            { name: "Dust3r", type: "3D", vram: "24GB", license: "MIT", vidSuffix: "_dust3r", tags: ["No Camera"] },
+            { name: "Sapiens", type: "Human", vram: "12GB", license: "CC-BY-NC", vidSuffix: "_sapiens", tags: ["Humans"] }
+        ];
+
+        // --- APP STATE ---
+        let currentScene = scenes[0];
+        let currentModel = null;
+        let isPlaying = false;
+        let isMuted = true;
+        let isDragging = false;
+
+        // --- DOM ELEMENTS ---
+        const els = {
+            sceneSelect: document.getElementById('sceneSelect'),
+            resDisplay: document.getElementById('resDisplay'),
+            framesDisplay: document.getElementById('framesDisplay'),
+            videoA: document.getElementById('videoA'),
+            videoB: document.getElementById('videoB'),
+            videoAContainer: document.getElementById('videoAContainer'),
+            sliderHandle: document.getElementById('sliderHandle'),
+            playPauseBtn: document.getElementById('playPauseBtn'),
+            progressBar: document.getElementById('progressBar'),
+            progressBarContainer: document.getElementById('progressBarContainer'),
+            timeDisplay: document.getElementById('timeDisplay'),
+            modelList: document.getElementById('modelList'),
+            modelCount: document.getElementById('modelCount'),
+            searchInput: document.getElementById('searchInput'),
+            loadingOverlay: document.getElementById('loadingOverlay'),
+            currentModelLabel: document.getElementById('currentModelLabel'),
+            activeModelCard: document.getElementById('activeModelCard'),
+            // Detail card els
+            detailName: document.getElementById('detailName'),
+            detailPurpose: document.getElementById('detailPurpose'),
+            detailVram: document.getElementById('detailVram'),
+            detailConsistency: document.getElementById('detailConsistency'),
+            detailType: document.getElementById('detailType'),
+            detailBadge: document.getElementById('detailBadge'),
+        };
+
+        // --- INITIALIZATION ---
+        function init() {
+            lucide.createIcons();
+            populateScenes();
+            renderModelList(models);
+            loadScene(scenes[0]);
+            setupEventListeners();
+            startSyncLoop();
+        }
+
+        function populateScenes() {
+            els.sceneSelect.innerHTML = scenes.map(s => 
+                `<option value="${s.id}">${s.name}</option>`
+            ).join('');
+        }
+
+        function renderModelList(listData) {
+            els.modelCount.innerText = `(${listData.length})`;
+            els.modelList.innerHTML = listData.map((m, index) => {
+                const isActive = currentModel && m.name === currentModel.name;
+                return `
+                <div onclick="selectModel('${m.name}')" 
+                     class="cursor-pointer group p-3 rounded-lg border transition-all duration-200 
+                     ${isActive ? 'bg-blue-900/20 border-blue-500/50' : 'bg-slate-900 border-slate-800 hover:border-slate-600'}">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="font-semibold text-sm ${isActive ? 'text-blue-400' : 'text-slate-200'}">${m.name}</div>
+                            <div class="text-xs text-slate-500 mt-1 flex gap-2">
+                                <span>${m.type}</span> • 
+                                <span>${m.vram}</span>
+                            </div>
+                        </div>
+                        ${m.tags.map(t => `<span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">${t}</span>`).join('')}
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        // --- CORE LOGIC ---
+
+        function loadScene(scene) {
+            currentScene = scene;
+            
+            // UI Updates
+            els.resDisplay.innerText = scene.resolution;
+            els.framesDisplay.innerText = scene.fps + " FPS";
+            els.loadingOverlay.classList.remove('hidden');
+
+            // Load Source Video (Slot A)
+            els.videoA.src = scene.source;
+            els.videoA.load();
+            
+            // If we have a model selected, load its version of this scene
+            if (currentModel) {
+                loadModelVideo(currentModel);
+            } else {
+                // FIX: Fallback to source video if no model selected, so player is valid
+                els.videoB.src = scene.source; 
+                // Don't apply filters, just show source vs source
+                els.videoB.style.filter = "none";
+                els.loadingOverlay.classList.add('hidden');
+            }
+        }
+
+        function selectModel(modelName) {
+            const model = models.find(m => m.name === modelName);
+            if (!model) return;
+            currentModel = model;
+            
+            // Update Detail Card
+            els.activeModelCard.classList.remove('hidden');
+            els.detailName.innerText = model.name;
+            els.detailType.innerText = model.type;
+            els.detailVram.innerText = model.vram;
+            els.detailConsistency.innerText = model.type === 'Video' ? 'High' : 'Medium'; // Mock logic
+            els.detailBadge.innerText = model.license;
+            els.currentModelLabel.innerText = model.name.toUpperCase();
+            
+            renderModelList(models); // Re-render to show active state
+            loadModelVideo(model);
+        }
+
+        function loadModelVideo(model) {
+            els.loadingOverlay.classList.remove('hidden');
+            
+            // Construct path based on scene + model suffix
+            // In a real scenario, this matches your repo file structure
+            // Demo fallback: using the same source video but applying a CSS filter to simulate depth for demo purposes
+            // In production: const path = `videos/${currentScene.id}${model.vidSuffix}.mp4`;
+            
+            // SIMULATION FOR DEMO:
+            const demoPath = currentScene.source; 
+            els.videoB.src = demoPath;
+            els.videoB.style.filter = "grayscale(100%) invert(100%) contrast(120%)"; // Fake depth look
+            
+            els.videoB.load();
+
+            // When ready, hide loader
+            els.videoB.oncanplay = () => {
+                els.loadingOverlay.classList.add('hidden');
+                if(isPlaying) {
+                    els.videoB.play().catch(e => console.log("Auto-resume error:", e));
+                }
+            };
+        }
+
+        // --- VIDEO SYNC ENGINE ---
+        // Keeps Video A (Source) and Video B (Model) perfectly aligned
+        function startSyncLoop() {
+            const sync = () => {
+                if (!els.videoB.paused && !els.videoA.paused) {
+                    const diff = Math.abs(els.videoA.currentTime - els.videoB.currentTime);
+                    if (diff > 0.1) {
+                        els.videoA.currentTime = els.videoB.currentTime;
+                    }
+                }
+                
+                // Update Progress Bar
+                if (els.videoB.duration) {
+                    const pct = (els.videoB.currentTime / els.videoB.duration) * 100;
+                    els.progressBar.style.width = `${pct}%`;
+                    els.timeDisplay.innerText = formatTime(els.videoB.currentTime) + " / " + formatTime(els.videoB.duration);
+                }
+                
+                requestAnimationFrame(sync);
+            };
+            requestAnimationFrame(sync);
+        }
+
+        // --- EVENT LISTENERS ---
+
+        function setupEventListeners() {
+            
+            // 1. Slider Logic
+            const updateSlider = (clientX) => {
+                const rect = document.getElementById('playerContainer').getBoundingClientRect();
+                const x = clientX - rect.left;
+                const width = rect.width;
+                const percent = Math.max(0, Math.min(100, (x / width) * 100));
+                
+                els.videoAContainer.style.width = `${percent}%`;
+                els.sliderHandle.style.left = `${percent}%`;
+            };
+
+            const container = document.getElementById('playerContainer');
+            
+            // Mouse Events
+            container.addEventListener('mousedown', () => isDragging = true);
+            window.addEventListener('mouseup', () => isDragging = false);
+            window.addEventListener('mousemove', (e) => {
+                if (isDragging) updateSlider(e.clientX);
+            });
+            // Click to jump
+            container.addEventListener('click', (e) => updateSlider(e.clientX));
+
+            // Touch Events (Mobile)
+            container.addEventListener('touchstart', () => isDragging = true, {passive: true});
+            window.addEventListener('touchend', () => isDragging = false);
+            container.addEventListener('touchmove', (e) => {
+                updateSlider(e.touches[0].clientX);
+            }, {passive: true});
+
+
+            // 2. Playback Controls
+            els.playPauseBtn.addEventListener('click', () => {
+                if (els.videoB.paused) {
+                    // FIX: Catch errors if playback fails due to browser policy or invalid source
+                    els.videoB.play().then(() => {
+                        els.videoA.play();
+                        els.videoA.currentTime = els.videoB.currentTime;
+                        isPlaying = true;
+                        els.playPauseBtn.innerHTML = `<i data-lucide="pause" class="w-5 h-5 fill-current"></i>`;
+                        lucide.createIcons();
+                    }).catch(err => {
+                        console.error("Playback failed:", err);
+                        // Reset UI if failed
+                        isPlaying = false;
+                    });
+                } else {
+                    els.videoB.pause();
+                    els.videoA.pause();
+                    isPlaying = false;
+                    els.playPauseBtn.innerHTML = `<i data-lucide="play" class="w-5 h-5 fill-current"></i>`;
+                    lucide.createIcons();
+                }
+            });
+
+            // 3. Scene Selection
+            els.sceneSelect.addEventListener('change', (e) => {
+                const scene = scenes.find(s => s.id === e.target.value);
+                loadScene(scene);
+            });
+
+            // 4. Search Filter
+            els.searchInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                const filtered = models.filter(m => m.name.toLowerCase().includes(term));
+                renderModelList(filtered);
+            });
+
+            // 5. Progress Bar Seek
+            els.progressBarContainer.addEventListener('click', (e) => {
+                const rect = els.progressBarContainer.getBoundingClientRect();
+                const pos = (e.clientX - rect.left) / rect.width;
+                if(els.videoB.duration) {
+                    els.videoB.currentTime = pos * els.videoB.duration;
+                    els.videoA.currentTime = els.videoB.currentTime;
+                }
+            });
+            
+            // 6. Mute Toggle
+             document.getElementById('muteBtn').addEventListener('click', function() {
+                els.videoA.muted = !els.videoA.muted;
+                els.videoB.muted = !els.videoB.muted;
+                this.innerHTML = els.videoB.muted ? 
+                    `<i data-lucide="volume-x" class="w-4 h-4"></i>` : 
+                    `<i data-lucide="volume-2" class="w-4 h-4"></i>`;
+                lucide.createIcons();
+            });
+        }
+
+        // Helper
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m}:${s < 10 ? '0'+s : s}`;
+        }
+
+        // Boot
+        window.onload = init;
+
+    </script>
+</body>
+</html>
