@@ -248,22 +248,23 @@
         // TIP: Use absolute paths or relative paths to your repo structure (e.g., 'assets/videos/clip1_source.mp4')
         const scenes = [
             {
-                id: 'walking_city',
-                name: 'Walking Man - City',
-                source: 'https://videos.pexels.com/video-files/3205636/3205636-hd_1920_1080_25fps.mp4', 
-                poster: 'https://images.pexels.com/videos/3205636/pictures/preview-0.jpg',
-                resolution: '1920x1080',
-                fps: '25',
-                desc: 'Handheld camera, complex background, moving subject.'
-            },
-            {
-                id: 'drone_landscape',
-                name: 'Drone - Landscape',
-                source: 'https://videos.pexels.com/video-files/855564/855564-hd_1920_1080_25fps.mp4',
-                poster: 'https://images.pexels.com/videos/855564/pictures/preview-0.jpg',
+                id: 'hovercraft',
+                name: 'Hovercraft',
+                source: 'assets/videos/HoverCraft_compressed.mp4',
+                poster: 'assets/videos/HoverCraft.jpg',
                 resolution: '1920x1080',
                 fps: '30',
                 desc: 'Fast motion, infinite depth, foliage texture.'
+            },
+            {
+                id: 'drive_clip_01',
+                name: 'Google Drive Test Clip',
+                // Converted from 'view' link to 'export=download' link for direct streaming
+                source: 'https://drive.google.com/uc?export=download&id=1RBiXfS1fKrYjY6QgolitHboIPVJVz26E', 
+                poster: '', // Optional: You can add a link to a thumbnail image here
+                resolution: 'Unknown', // Update this manually based on your video
+                fps: 'Unknown',        // Update this manually based on your video
+                desc: 'Custom video loaded directly from Google Drive.'
             }
         ];
 
