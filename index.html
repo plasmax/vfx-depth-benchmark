@@ -248,11 +248,12 @@
         // --- DATA CONFIGURATION ---
         
         // Define your test clips here. 
-        // TIP: Use absolute paths or relative paths to your repo structure (e.g., 'assets/videos/clip1_source.mp4')
+        // TIP: Use absolute paths or relative paths to your repo structure (e.g., 'assets/video/src/clip1_source.mp4')
         const scenes = [
             {
                 id: 'hovercraft',
                 name: 'Hovercraft',
+                fileBase: 'HoverCraft',
                 source: 'assets/video/src/HoverCraft_compressed.mp4',
                 poster: 'assets/video/src/HoverCraft.jpg',
                 resolution: '848x480',
@@ -262,6 +263,7 @@
             {
                 id: 'club',
                 name: 'Club',
+                fileBase: 'Club',
                 source: 'assets/video/src/Club_compressed.mp4',
                 poster: 'assets/video/src/Club.jpg',
                 resolution: '848x480',
@@ -271,6 +273,7 @@
             {
                 id: 'mountain',
                 name: 'Mountain',
+                fileBase: 'Mountain',
                 source: 'assets/video/src/Mountain_compressed.mp4', 
                 poster: 'assets/video/src/Mountain.jpg',
                 resolution: '1920x1080',
@@ -280,6 +283,7 @@
             {
                 id: 'dancing',
                 name: 'Dancing',
+                fileBase: 'Dancing',
                 source: 'assets/video/src/Dancing_compressed.mp4',
                 poster: 'assets/video/src/Dancing.jpg',
                 resolution: '848x480',
@@ -289,41 +293,40 @@
         ];
 
         // Full Model List from your request
-        // TIP: 'vidSuffix' is what we append to the scene ID to find the file.
-        // e.g. if scene is 'walking_city', Depth Anything V2 looks for 'walking_city_depth_anything_v2.mp4'
+        // TIP: 'resultsKey' maps to assets/video/results/{resultsKey}/{SceneFileBase}_{resultsKey}.mp4
         const models = [
-            { name: "Depth Anything V2", type: "Monocular", vram: "8GB", license: "Apache 2.0", vidSuffix: "_da2", tags: ["SOTA", "Fast"] },
-            { name: "Depth Anything 3", type: "Monocular", vram: "10GB", license: "Research", vidSuffix: "_da3", tags: ["New"] },
-            { name: "MiDaS", type: "Monocular", vram: "4GB", license: "MIT", vidSuffix: "_midas", tags: ["Legacy"] },
-            { name: "MoGe", type: "Geometry", vram: "12GB", license: "Research", vidSuffix: "_moge", tags: [] },
-            { name: "MoGe-2", type: "Geometry", vram: "16GB", license: "Research", vidSuffix: "_moge2", tags: [] },
-            { name: "GeometryCrafter", type: "Generative", vram: "24GB", license: "Research", vidSuffix: "_geocrafter", tags: ["Heavy"] },
-            { name: "DepthCrafter", type: "Generative", vram: "22GB", license: "Research", vidSuffix: "_depthcrafter", tags: [] },
-            { name: "NVDS+", type: "Stereo", vram: "12GB", license: "NVIDIA", vidSuffix: "_nvds", tags: [] },
-            { name: "Video Depth Anything", type: "Video", vram: "10GB", license: "Apache 2.0", vidSuffix: "_vda", tags: ["Temporal"] },
-            { name: "Online Video Depth Anything", type: "Video", vram: "8GB", license: "Apache 2.0", vidSuffix: "_ovda", tags: ["Realtime"] },
-            { name: "FlashDepth", type: "Monocular", vram: "2GB", license: "MIT", vidSuffix: "_flash", tags: ["Fast"] },
-            { name: "BetterDepth", type: "Monocular", vram: "6GB", license: "Research", vidSuffix: "_better", tags: [] },
-            { name: "VGGT", type: "Video", vram: "16GB", license: "Research", vidSuffix: "_vggt", tags: [] },
-            { name: "Prior Depth Anything", type: "Monocular", vram: "8GB", license: "Apache 2.0", vidSuffix: "_pda", tags: [] },
-            { name: "Prompt Depth Anything", type: "Interactive", vram: "8GB", license: "Apache 2.0", vidSuffix: "_promptda", tags: [] },
-            { name: "Depth Pro", type: "Monocular", vram: "12GB", license: "Research", vidSuffix: "_depthpro", tags: ["Metric"] },
-            { name: "Pixel Perfect Depth", type: "Monocular", vram: "6GB", license: "Research", vidSuffix: "_ppd", tags: [] },
-            { name: "TTT3R", type: "3D", vram: "24GB", license: "Research", vidSuffix: "_ttt3r", tags: [] },
-            { name: "BA-Track", type: "Tracking", vram: "12GB", license: "MIT", vidSuffix: "_batrack", tags: [] },
-            { name: "Consistent Video Depth", type: "Video", vram: "14GB", license: "MIT", vidSuffix: "_cvd", tags: ["Stable"] },
-            { name: "Robust Consistent Video Depth", type: "Video", vram: "16GB", license: "MIT", vidSuffix: "_rcvd", tags: [] },
-            { name: "COLMAP", type: "SfM", vram: "N/A", license: "BSD", vidSuffix: "_colmap", tags: ["Offline", "Reference"] },
-            { name: "UniDepthV2", type: "Monocular", vram: "10GB", license: "Apache 2.0", vidSuffix: "_uni2", tags: [] },
-            { name: "DINOv2", type: "Feature", vram: "8GB", license: "Apache 2.0", vidSuffix: "_dino2", tags: [] },
-            { name: "ZoeDepth", type: "Monocular", vram: "6GB", license: "MIT", vidSuffix: "_zoe", tags: ["Metric"] },
-            { name: "Marigold", type: "Generative", vram: "16GB", license: "Apache 2.0", vidSuffix: "_marigold", tags: ["High Quality"] },
-            { name: "Lotus 2", type: "Generative", vram: "20GB", license: "Research", vidSuffix: "_lotus2", tags: [] },
-            { name: "ChronoDepth", type: "Video", vram: "12GB", license: "Research", vidSuffix: "_chrono", tags: [] },
-            { name: "SpatialTracker", type: "Tracking", vram: "10GB", license: "MIT", vidSuffix: "_spatial", tags: [] },
-            { name: "Mast3r", type: "3D", vram: "24GB", license: "MIT", vidSuffix: "_mast3r", tags: [] },
-            { name: "Dust3r", type: "3D", vram: "24GB", license: "MIT", vidSuffix: "_dust3r", tags: ["No Camera"] },
-            { name: "Sapiens", type: "Human", vram: "12GB", license: "CC-BY-NC", vidSuffix: "_sapiens", tags: ["Humans"] }
+            // { name: "Depth Anything V2", type: "Monocular", vram: "8GB", license: "Apache 2.0", vidSuffix: "_da2", tags: ["SOTA", "Fast"] },
+            // { name: "Depth Anything 3", type: "Monocular", vram: "10GB", license: "Research", vidSuffix: "_da3", tags: ["New"] },
+            // { name: "MiDaS", type: "Monocular", vram: "4GB", license: "MIT", vidSuffix: "_midas", tags: ["Legacy"] },
+            // { name: "MoGe", type: "Geometry", vram: "12GB", license: "Research", vidSuffix: "_moge", tags: [] },
+            // { name: "MoGe-2", type: "Geometry", vram: "16GB", license: "Research", vidSuffix: "_moge2", tags: [] },
+            { name: "GeometryCrafter", type: "Generative", vram: "24GB", license: "Research", vidSuffix: "_geocrafter", resultsKey: "GeometryCrafter", tags: ["Heavy"] },
+            { name: "DepthCrafter", type: "Generative", vram: "22GB", license: "Research", vidSuffix: "_depthcrafter", resultsKey: "DepthCrafter", tags: [] },
+            // { name: "NVDS+", type: "Stereo", vram: "12GB", license: "NVIDIA", vidSuffix: "_nvds", tags: [] },
+            { name: "Video Depth Anything", type: "Video", vram: "10GB", license: "Apache 2.0", vidSuffix: "_vda", resultsKey: "VideoDepthAnything", tags: ["Temporal"] },
+            // { name: "Online Video Depth Anything", type: "Video", vram: "8GB", license: "Apache 2.0", vidSuffix: "_ovda", tags: ["Realtime"] },
+            // { name: "FlashDepth", type: "Monocular", vram: "2GB", license: "MIT", vidSuffix: "_flash", tags: ["Fast"] },
+            // { name: "BetterDepth", type: "Monocular", vram: "6GB", license: "Research", vidSuffix: "_better", tags: [] },
+            // { name: "VGGT", type: "Video", vram: "16GB", license: "Research", vidSuffix: "_vggt", tags: [] },
+            // { name: "Prior Depth Anything", type: "Monocular", vram: "8GB", license: "Apache 2.0", vidSuffix: "_pda", tags: [] },
+            // { name: "Prompt Depth Anything", type: "Interactive", vram: "8GB", license: "Apache 2.0", vidSuffix: "_promptda", tags: [] },
+            // { name: "Depth Pro", type: "Monocular", vram: "12GB", license: "Research", vidSuffix: "_depthpro", tags: ["Metric"] },
+            // { name: "Pixel Perfect Depth", type: "Monocular", vram: "6GB", license: "Research", vidSuffix: "_ppd", tags: [] },
+            // { name: "TTT3R", type: "3D", vram: "24GB", license: "Research", vidSuffix: "_ttt3r", tags: [] },
+            // { name: "BA-Track", type: "Tracking", vram: "12GB", license: "MIT", vidSuffix: "_batrack", tags: [] },
+            // { name: "Consistent Video Depth", type: "Video", vram: "14GB", license: "MIT", vidSuffix: "_cvd", tags: ["Stable"] },
+            // { name: "Robust Consistent Video Depth", type: "Video", vram: "16GB", license: "MIT", vidSuffix: "_rcvd", tags: [] },
+            // { name: "COLMAP", type: "SfM", vram: "N/A", license: "BSD", vidSuffix: "_colmap", tags: ["Offline", "Reference"] },
+            // { name: "UniDepthV2", type: "Monocular", vram: "10GB", license: "Apache 2.0", vidSuffix: "_uni2", tags: [] },
+            // { name: "DINOv2", type: "Feature", vram: "8GB", license: "Apache 2.0", vidSuffix: "_dino2", tags: [] },
+            // { name: "ZoeDepth", type: "Monocular", vram: "6GB", license: "MIT", vidSuffix: "_zoe", tags: ["Metric"] },
+            // { name: "Marigold", type: "Generative", vram: "16GB", license: "Apache 2.0", vidSuffix: "_marigold", tags: ["High Quality"] },
+            // { name: "Lotus 2", type: "Generative", vram: "20GB", license: "Research", vidSuffix: "_lotus2", tags: [] },
+            // { name: "ChronoDepth", type: "Video", vram: "12GB", license: "Research", vidSuffix: "_chrono", tags: [] },
+            // { name: "SpatialTracker", type: "Tracking", vram: "10GB", license: "MIT", vidSuffix: "_spatial", tags: [] },
+            // { name: "Mast3r", type: "3D", vram: "24GB", license: "MIT", vidSuffix: "_mast3r", tags: [] },
+            // { name: "Dust3r", type: "3D", vram: "24GB", license: "MIT", vidSuffix: "_dust3r", tags: ["No Camera"] },
+            // { name: "Sapiens", type: "Human", vram: "12GB", license: "CC-BY-NC", vidSuffix: "_sapiens", tags: ["Humans"] }
         ];
 
         // --- APP STATE ---
@@ -449,13 +452,20 @@
             
             // Construct path based on scene + model suffix
             // In a real scenario, this matches your repo file structure
-            // Demo fallback: using the same source video but applying a CSS filter to simulate depth for demo purposes
-            // In production: const path = `videos/${currentScene.id}${model.vidSuffix}.mp4`;
+            // Results: assets/video/results/{ModelKey}/{SceneFileBase}_{ModelKey}.mp4
+            const sceneBase = currentScene.fileBase || currentScene.name;
+            const resultPath = model.resultsKey
+                ? `assets/video/results/${model.resultsKey}/${sceneBase}_${model.resultsKey}.mp4`
+                : null;
             
-            // SIMULATION FOR DEMO:
-            const demoPath = currentScene.source; 
-            els.videoB.src = demoPath;
-            els.videoB.style.filter = "grayscale(100%) invert(100%) contrast(120%)"; // Fake depth look
+            if (resultPath) {
+                els.videoB.src = resultPath;
+                els.videoB.style.filter = "none";
+            } else {
+                // Fallback to source if no results configured for this model
+                els.videoB.src = currentScene.source;
+                els.videoB.style.filter = "none";
+            }
             
             els.videoB.load();
 
