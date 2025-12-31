@@ -251,6 +251,16 @@
         // TIP: Use absolute paths or relative paths to your repo structure (e.g., 'assets/video/src/clip1_source.mp4')
         const scenes = [
             {
+                id: 'mountain',
+                name: 'Mountain',
+                fileBase: 'Mountain',
+                source: 'assets/video/src/Mountain_compressed.mp4', 
+                poster: 'assets/video/src/Mountain.jpg',
+                resolution: '1920x1080',
+                fps: '29.97',
+                desc: ''
+            },
+            {
                 id: 'hovercraft',
                 name: 'Hovercraft',
                 fileBase: 'HoverCraft',
@@ -271,16 +281,6 @@
                 desc: ''
             },
             {
-                id: 'mountain',
-                name: 'Mountain',
-                fileBase: 'Mountain',
-                source: 'assets/video/src/Mountain_compressed.mp4', 
-                poster: 'assets/video/src/Mountain.jpg',
-                resolution: '1920x1080',
-                fps: '29.97',
-                desc: ''
-            },
-            {
                 id: 'dancing',
                 name: 'Dancing',
                 fileBase: 'Dancing',
@@ -292,6 +292,9 @@
             }
         ];
 
+        const defaultSceneId = 'mountain';
+        const defaultModelName = 'Video Depth Anything';
+
         // Full Model List from your request
         // TIP: 'resultsKey' maps to assets/video/results/{resultsKey}/{SceneFileBase}_{resultsKey}.mp4
         const models = [
@@ -300,10 +303,10 @@
             // { name: "MiDaS", type: "Monocular", vram: "4GB", license: "MIT", vidSuffix: "_midas", tags: ["Legacy"] },
             // { name: "MoGe", type: "Geometry", vram: "12GB", license: "Research", vidSuffix: "_moge", tags: [] },
             // { name: "MoGe-2", type: "Geometry", vram: "16GB", license: "Research", vidSuffix: "_moge2", tags: [] },
-            { name: "GeometryCrafter", type: "Generative", vram: "24GB", license: "Research", vidSuffix: "_geocrafter", resultsKey: "GeometryCrafter", tags: ["Heavy"] },
-            { name: "DepthCrafter", type: "Generative", vram: "22GB", license: "Research", vidSuffix: "_depthcrafter", resultsKey: "DepthCrafter", tags: [] },
+            { name: "GeometryCrafter", type: "Generative", vram: "24GB", license: "Research", vidSuffix: "_geocrafter", resultsKey: "GeometryCrafter", availableScenes: ["dancing"], tags: ["Heavy"] },
+            { name: "DepthCrafter", type: "Generative", vram: "22GB", license: "Research", vidSuffix: "_depthcrafter", resultsKey: "DepthCrafter", availableScenes: ["mountain"], tags: [] },
             // { name: "NVDS+", type: "Stereo", vram: "12GB", license: "NVIDIA", vidSuffix: "_nvds", tags: [] },
-            { name: "Video Depth Anything", type: "Video", vram: "10GB", license: "Apache 2.0", vidSuffix: "_vda", resultsKey: "VideoDepthAnything", tags: ["Temporal"] },
+            { name: "Video Depth Anything", type: "Video", vram: "10GB", license: "Apache 2.0", vidSuffix: "_vda", resultsKey: "VideoDepthAnything", availableScenes: ["mountain"], tags: ["Temporal"] },
             // { name: "Online Video Depth Anything", type: "Video", vram: "8GB", license: "Apache 2.0", vidSuffix: "_ovda", tags: ["Realtime"] },
             // { name: "FlashDepth", type: "Monocular", vram: "2GB", license: "MIT", vidSuffix: "_flash", tags: ["Fast"] },
             // { name: "BetterDepth", type: "Monocular", vram: "6GB", license: "Research", vidSuffix: "_better", tags: [] },
@@ -369,8 +372,13 @@
         function init() {
             lucide.createIcons();
             populateScenes();
+            const defaultScene = scenes.find(s => s.id === defaultSceneId) || scenes[0];
+            const defaultModel = models.find(m => m.name === defaultModelName) || null;
             renderModelList(models);
-            loadScene(scenes[0]);
+            loadScene(defaultScene);
+            if (defaultModel) {
+                selectModel(defaultModel.name);
+            }
             setupEventListeners();
             startSyncLoop();
         }
@@ -385,10 +393,12 @@
             els.modelCount.innerText = `(${listData.length})`;
             els.modelList.innerHTML = listData.map((m, index) => {
                 const isActive = currentModel && m.name === currentModel.name;
+                const isAvailable = isModelAvailableForScene(m, currentScene);
                 return `
-                <div onclick="selectModel('${m.name}')" 
-                     class="cursor-pointer group p-3 rounded-lg border transition-all duration-200 
-                     ${isActive ? 'bg-blue-900/20 border-blue-500/50' : 'bg-slate-900 border-slate-800 hover:border-slate-600'}">
+                <div ${isAvailable ? `onclick="selectModel('${m.name}')"` : ''} 
+                     class="group p-3 rounded-lg border transition-all duration-200 
+                     ${isActive ? 'bg-blue-900/20 border-blue-500/50' : 'bg-slate-900 border-slate-800 hover:border-slate-600'}
+                     ${isAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-40 grayscale'}">
                     <div class="flex justify-between items-start">
                         <div>
                             <div class="font-semibold text-sm ${isActive ? 'text-blue-400' : 'text-slate-200'}">${m.name}</div>
@@ -408,6 +418,8 @@
         function loadScene(scene) {
             currentScene = scene;
             
+            els.sceneSelect.value = scene.id;
+
             // UI Updates
             els.resDisplay.innerText = scene.resolution;
             els.framesDisplay.innerText = scene.fps + " FPS";
@@ -418,20 +430,27 @@
             els.videoA.load();
             
             // If we have a model selected, load its version of this scene
-            if (currentModel) {
+            if (currentModel && isModelAvailableForScene(currentModel, scene)) {
                 loadModelVideo(currentModel);
             } else {
+                if (currentModel) {
+                    currentModel = null;
+                    els.currentModelLabel.innerText = "SELECT A MODEL";
+                    els.activeModelCard.classList.add('hidden');
+                }
                 // FIX: Fallback to source video if no model selected, so player is valid
                 els.videoB.src = scene.source; 
                 // Don't apply filters, just show source vs source
                 els.videoB.style.filter = "none";
                 els.loadingOverlay.classList.add('hidden');
             }
+
+            renderModelList(models);
         }
 
         function selectModel(modelName) {
             const model = models.find(m => m.name === modelName);
-            if (!model) return;
+            if (!model || !isModelAvailableForScene(model, currentScene)) return;
             currentModel = model;
             
             // Update Detail Card
@@ -454,7 +473,7 @@
             // In a real scenario, this matches your repo file structure
             // Results: assets/video/results/{ModelKey}/{SceneFileBase}_{ModelKey}.mp4
             const sceneBase = currentScene.fileBase || currentScene.name;
-            const resultPath = model.resultsKey
+            const resultPath = isModelAvailableForScene(model, currentScene) && model.resultsKey
                 ? `assets/video/results/${model.resultsKey}/${sceneBase}_${model.resultsKey}.mp4`
                 : null;
             
@@ -476,6 +495,14 @@
                     els.videoB.play().catch(e => console.log("Auto-resume error:", e));
                 }
             };
+        }
+
+        function isModelAvailableForScene(model, scene) {
+            if (!model.resultsKey) return false;
+            if (Array.isArray(model.availableScenes)) {
+                return model.availableScenes.includes(scene.id);
+            }
+            return true;
         }
 
         // --- VIDEO SYNC ENGINE ---
