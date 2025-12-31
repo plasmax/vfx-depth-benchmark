@@ -1,6 +1,8 @@
 /assets/video/src/*.*
-/assets/video/results
+/assets/video/results/*.*
+/assets/video/results/*/*.*
 
 !/assets/video/src/*.jpg
 !/assets/video/src/*_compressed.mp4
 
+!/assets/video/results/*/*.mp4
