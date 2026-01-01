@@ -1,3 +1,5 @@
+/miniconda3
+miniconda.sh
 /assets/video/src/*.*
 /assets/video/results/*.*
 /assets/video/results/*/*.*
